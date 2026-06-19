@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -19,9 +20,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
     }
 
+    // Sanitize filename to prevent overwrites
+    const safeFilename = `${randomUUID()}-${filename}`;
+
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
-      Key: filename,
+      Key: safeFilename,
       ContentType: contentType,
     });
 
@@ -29,7 +33,7 @@ export async function POST(req: Request) {
     const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
     
     // The public URL to access the file after upload
-    const publicUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${filename}`;
+    const publicUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${safeFilename}`;
 
     return NextResponse.json({ signedUrl, publicUrl });
   } catch (error) {
