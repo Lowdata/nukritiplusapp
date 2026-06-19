@@ -36,9 +36,9 @@ export function HLSPlayer({ src, title, onProgress, initialTime = 0 }: HLSPlayer
     const video = videoRef.current;
     if (!video) return;
 
-    const isMp4 = src.toLowerCase().endsWith(".mp4");
+    const isHls = src.toLowerCase().includes(".m3u8");
 
-    if (isMp4) {
+    if (!isHls) {
       video.src = src;
       video.currentTime = initialTime;
       video.addEventListener("loadedmetadata", () => {

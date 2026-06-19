@@ -1,13 +1,24 @@
 import { HLSPlayer } from "@/components/player/HLSPlayer";
+import { getVideoById } from "@/lib/firestore/api";
+import { notFound } from "next/navigation";
 
-export default async function WatchPage({ params }: { params: Promise<{ id: string }> }) {
+interface WatchPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function WatchPage({ params }: WatchPageProps) {
   const { id } = await params;
+  const video = await getVideoById(id);
+
+  if (!video) {
+    notFound();
+  }
   
   return (
     <div className="w-full h-screen bg-black overflow-hidden">
       <HLSPlayer 
-        src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" 
-        title={`Memory ${id}`}
+        src={video.videoUrl} 
+        title={video.title}
       />
     </div>
   );
