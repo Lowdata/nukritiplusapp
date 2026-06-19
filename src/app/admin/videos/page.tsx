@@ -12,7 +12,7 @@ export default async function AdminVideos() {
   async function deleteVideo(formData: FormData) {
     "use server";
     const id = formData.get("id") as string;
-    if (id) {
+    if (id && adminDb) {
       await adminDb.collection("videos").doc(id).delete();
       revalidatePath("/admin/videos");
       revalidatePath("/");

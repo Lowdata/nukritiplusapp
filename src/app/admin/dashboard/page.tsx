@@ -10,8 +10,10 @@ export default async function AdminDashboard() {
   // Fetch users count dynamically
   let totalUsers = 0;
   try {
-    const usersSnapshot = await adminDb.collection("users").get();
-    totalUsers = usersSnapshot.size;
+    if (adminDb) {
+      const usersSnapshot = await adminDb.collection("users").get();
+      totalUsers = usersSnapshot.size;
+    }
   } catch (error) {
     console.error("Error fetching user count for dashboard:", error);
   }
