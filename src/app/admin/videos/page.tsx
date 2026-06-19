@@ -1,14 +1,23 @@
 import { Edit, Trash, Plus } from "lucide-react";
 import Link from "next/link";
+import { getAllVideos } from "@/lib/firestore/api";
+import { adminDb } from "@/lib/firebase/admin";
+import { revalidatePath } from "next/cache";
 
-export default function AdminVideos() {
-  const MOCK_VIDEOS = Array.from({ length: 5 }).map((_, i) => ({
-    id: `video-${i}`,
-    title: `Family Vacation 202${i}`,
-    category: "Travel",
-    year: `202${i}`,
-    featured: i === 0,
-  }));
+export const revalidate = 0; // Don't cache admin dashboard heavily
+
+export default async function AdminVideos() {
+  const videos = await getAllVideos();
+
+  async function deleteVideo(formData: FormData) {
+    "use server";
+    const id = formData.get("id") as string;
+    if (id) {
+      await adminDb.collection("videos").doc(id).delete();
+      revalidatePath("/admin/videos");
+      revalidatePath("/");
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -27,26 +36,29 @@ export default function AdminVideos() {
               <th className="px-6 py-4 font-medium">Title</th>
               <th className="px-6 py-4 font-medium">Category</th>
               <th className="px-6 py-4 font-medium">Year</th>
-              <th className="px-6 py-4 font-medium">Featured</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {MOCK_VIDEOS.map(video => (
+            {videos.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">No videos uploaded yet.</td>
+              </tr>
+            )}
+            {videos.map(video => (
               <tr key={video.id} className="hover:bg-muted/50 transition">
-                <td className="px-6 py-4 font-medium">{video.title}</td>
+                <td className="px-6 py-4 font-medium flex items-center gap-4">
+                  {video.thumbnailUrl && <img src={video.thumbnailUrl} alt="Thumb" className="w-16 h-10 object-cover rounded" />}
+                  {video.title}
+                </td>
                 <td className="px-6 py-4 text-muted-foreground">{video.category}</td>
                 <td className="px-6 py-4 text-muted-foreground">{video.year}</td>
-                <td className="px-6 py-4">
-                  {video.featured ? (
-                    <span className="px-2 py-1 bg-green-500/20 text-green-500 rounded-full text-xs font-medium">Yes</span>
-                  ) : (
-                    <span className="px-2 py-1 bg-gray-500/20 text-gray-500 rounded-full text-xs font-medium">No</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="p-2 hover:text-primary transition"><Edit className="w-4 h-4" /></button>
-                  <button className="p-2 hover:text-destructive transition"><Trash className="w-4 h-4" /></button>
+                <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                  <button className="p-2 hover:text-primary transition" title="Edit"><Edit className="w-4 h-4" /></button>
+                  <form action={deleteVideo}>
+                    <input type="hidden" name="id" value={video.id} />
+                    <button type="submit" className="p-2 hover:text-destructive transition" title="Delete"><Trash className="w-4 h-4" /></button>
+                  </form>
                 </td>
               </tr>
             ))}

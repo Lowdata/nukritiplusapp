@@ -1,11 +1,22 @@
 import { Edit, Trash, Plus } from "lucide-react";
+import { getAllVideos } from "@/lib/firestore/api";
 
-export default function AdminCategories() {
-  const MOCK_CATEGORIES = [
-    { id: "1", name: "Travel", count: 42 },
-    { id: "2", name: "Birthday", count: 18 },
-    { id: "3", name: "Milestone", count: 5 },
-  ];
+export const revalidate = 0;
+
+export default async function AdminCategories() {
+  const videos = await getAllVideos();
+
+  // Aggregate categories from uploaded videos
+  const categoryMap: Record<string, number> = {};
+  videos.forEach(v => {
+    if (!categoryMap[v.category]) categoryMap[v.category] = 0;
+    categoryMap[v.category]++;
+  });
+
+  const categories = Object.keys(categoryMap).map(name => ({
+    name,
+    count: categoryMap[name],
+  }));
 
   return (
     <div className="space-y-8">
@@ -27,8 +38,13 @@ export default function AdminCategories() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {MOCK_CATEGORIES.map(category => (
-              <tr key={category.id} className="hover:bg-muted/50 transition">
+            {categories.length === 0 && (
+              <tr>
+                <td colSpan={3} className="px-6 py-8 text-center text-muted-foreground">No categories found. Upload a video to create one.</td>
+              </tr>
+            )}
+            {categories.map(category => (
+              <tr key={category.name} className="hover:bg-muted/50 transition">
                 <td className="px-6 py-4 font-medium">{category.name}</td>
                 <td className="px-6 py-4 text-muted-foreground">{category.count} videos</td>
                 <td className="px-6 py-4 text-right">

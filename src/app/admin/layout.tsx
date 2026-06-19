@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminGuard } from "@/components/auth/AdminGuard";
 
 export default function AdminLayout({
   children,
@@ -6,7 +7,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
+    <AdminGuard>
+      <div className="flex min-h-screen">
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6">
           <Link href="/" className="text-2xl font-black text-primary tracking-tighter">
@@ -23,6 +25,7 @@ export default function AdminLayout({
       <main className="flex-1 p-8 overflow-y-auto">
         {children}
       </main>
-    </div>
+      </div>
+    </AdminGuard>
   );
 }

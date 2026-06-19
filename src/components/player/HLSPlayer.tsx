@@ -36,6 +36,17 @@ export function HLSPlayer({ src, title, onProgress, initialTime = 0 }: HLSPlayer
     const video = videoRef.current;
     if (!video) return;
 
+    const isMp4 = src.toLowerCase().endsWith(".mp4");
+
+    if (isMp4) {
+      video.src = src;
+      video.currentTime = initialTime;
+      video.addEventListener("loadedmetadata", () => {
+        video.play().catch(() => console.log("Autoplay prevented"));
+      });
+      return;
+    }
+
     if (Hls.isSupported()) {
       const hls = new Hls({
         startPosition: initialTime,
